@@ -1,0 +1,462 @@
+{
+	"info": {
+		"_postman_id": "nettwin-saas-api",
+		"name": "NetTwinSaaS API Collection",
+		"description": "Complete API collection for NetTwinSaaS - Network Digital Twin as-a-Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "demo-token",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "topology_url", 
+			"value": "http://localhost:8002",
+			"type": "string"
+		},
+		{
+			"key": "config_url",
+			"value": "http://localhost:8003", 
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health Checks",
+			"item": [
+				{
+					"name": "What-If Engine Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Topology Builder Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{topology_url}}/health",
+							"host": ["{{topology_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Config Generator Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{config_url}}/health",
+							"host": ["{{config_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login Demo User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.environment.set('auth_token', jsonData.access_token);",
+									"    pm.collectionVariables.set('auth_token', jsonData.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"demo\",\n    \"password\": \"demo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Network Discovery",
+			"item": [
+				{
+					"name": "Discover Network Topology",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 or 202', function () {",
+									"    pm.expect([200, 202]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (responseCode.code === 202) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('discovery_id', jsonData.discovery_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"network_range\": \"192.168.1.0/24\",\n    \"discovery_type\": \"full\",\n    \"protocols\": [\"snmp\", \"lldp\"],\n    \"depth\": 3\n}"
+						},
+						"url": {
+							"raw": "{{topology_url}}/api/v1/discover",
+							"host": ["{{topology_url}}"],
+							"path": ["api", "v1", "discover"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discovery Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{topology_url}}/api/v1/discovery/{{discovery_id}}/status",
+							"host": ["{{topology_url}}"],
+							"path": ["api", "v1", "discovery", "{{discovery_id}}", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Network Topology",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Response contains nodes and links', function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('nodes');",
+									"    pm.expect(jsonData).to.have.property('links');",
+									"    pm.expect(jsonData.nodes.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{topology_url}}/api/v1/topology",
+							"host": ["{{topology_url}}"],
+							"path": ["api", "v1", "topology"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "What-If Simulations",
+			"item": [
+				{
+					"name": "Simulate Add Link",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Simulation completed successfully', function () {",
+									"    pm.response.to.have.status(200);",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('simulation_id');",
+									"    pm.expect(jsonData).to.have.property('impact_analysis');",
+									"    pm.collectionVariables.set('simulation_id', jsonData.simulation_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"add_link\",\n    \"src\": \"R1\",\n    \"dst\": \"R3\",\n    \"capacity\": 1000,\n    \"latency\": 5,\n    \"cost\": 100\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/simulate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "simulate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Simulate Remove Link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"remove_link\",\n    \"src\": \"R2\",\n    \"dst\": \"R4\",\n    \"reason\": \"maintenance\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/simulate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "simulate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Simulate Capacity Change",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"action\": \"change_capacity\",\n    \"src\": \"R1\",\n    \"dst\": \"R2\",\n    \"new_capacity\": 2000,\n    \"current_utilization\": 0.75\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/simulate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "simulate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Simulation Results",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/simulation/{{simulation_id}}/results",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "simulation", "{{simulation_id}}", "results"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Configuration Management",
+			"item": [
+				{
+					"name": "Generate Configurations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Configuration generation started', function () {",
+									"    pm.response.to.have.status(202);",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('job_id');",
+									"    pm.collectionVariables.set('config_job_id', jsonData.job_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"simulation_id\": \"{{simulation_id}}\",\n    \"dry_run\": true,\n    \"targets\": [\"R1\", \"R3\"],\n    \"config_type\": \"qos\",\n    \"priority\": \"high\"\n}"
+						},
+						"url": {
+							"raw": "{{config_url}}/api/v1/generate",
+							"host": ["{{config_url}}"],
+							"path": ["api", "v1", "generate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Configuration Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{config_url}}/api/v1/job/{{config_job_id}}/status",
+							"host": ["{{config_url}}"],
+							"path": ["api", "v1", "job", "{{config_job_id}}", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Generated Configurations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{config_url}}/api/v1/job/{{config_job_id}}/download",
+							"host": ["{{config_url}}"],
+							"path": ["api", "v1", "job", "{{config_job_id}}", "download"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deploy Configuration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"job_id\": \"{{config_job_id}}\",\n    \"targets\": [\"R1\", \"R3\"],\n    \"rollback_on_error\": true,\n    \"confirmation_required\": false\n}"
+						},
+						"url": {
+							"raw": "{{config_url}}/api/v1/deploy",
+							"host": ["{{config_url}}"],
+							"path": ["api", "v1", "deploy"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Monitoring & Metrics",
+			"item": [
+				{
+					"name": "Get System Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/metrics/system",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "metrics", "system"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Network Metrics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/metrics/network?time_range=1h",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "metrics", "network"],
+							"query": [
+								{
+									"key": "time_range",
+									"value": "1h"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

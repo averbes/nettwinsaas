@@ -1,0 +1,66 @@
+{
+  "name": "NetTwinSaaS Development",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/eitsupi/devcontainer-features/redis-server:1": {},
+    "ghcr.io/meaningful-ooo/devcontainer-features/neo4j:1": {
+      "version": "5"
+    }
+  },
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.flake8",
+        "ms-python.black-formatter",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        }
+      }
+    }
+  },
+  
+  "forwardPorts": [3000, 5173, 8001, 8002, 8003, 8004, 7474, 7687, 6379, 9000],
+  "portsAttributes": {
+    "3000": {"label": "UI"},
+    "5173": {"label": "Vite Dev Server"},
+    "8001": {"label": "What-If Engine"},
+    "8002": {"label": "Topology Builder"},
+    "8003": {"label": "Config Generator"},
+    "8004": {"label": "Collector"},
+    "7474": {"label": "Neo4j Browser"},
+    "7687": {"label": "Neo4j Bolt"},
+    "6379": {"label": "Redis"},
+    "9000": {"label": "ClickHouse"}
+  },
+  
+  "postCreateCommand": "pip install -r requirements-dev.txt && npm install -g pnpm",
+  
+  "remoteUser": "vscode",
+  
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  
+  "workspaceFolder": "/workspace",
+  
+  "containerEnv": {
+    "NETTWIN_ENV": "codespaces",
+    "PYTHONPATH": "/workspace",
+    "NODE_ENV": "development"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "packages": [
+    "python311",
+    "nodejs_18",
+    "redis",
+    "neo4j-community",
+    "clickhouse"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo '🚀 NetTwinSaaS DevBox Environment'",
+      "echo 'Python: $(python --version)'",
+      "echo 'Node: $(node --version)'",
+      "echo 'Redis: $(redis-server --version)'",
+      "echo ''",
+      "echo '📋 Available commands:'",
+      "echo '  make dev     - Start all services'",
+      "echo '  make local   - Start local development'",
+      "echo '  make test    - Run tests'",
+      "echo ''",
+      "export PYTHONPATH=$PWD:$PYTHONPATH"
+    ],
+    "scripts": {
+      "start-redis": "redis-server --port 6379 --save '' --appendonly no",
+      "start-neo4j": "neo4j console",
+      "start-clickhouse": "clickhouse server --config-file=/dev/null"
+    }
+  },
+  "env": {
+    "NETTWIN_ENV": "devbox",
+    "REDIS_URL": "redis://localhost:6379",
+    "NEO4J_URI": "bolt://localhost:7687",
+    "CLICKHOUSE_HOST": "localhost"
+  }
+}

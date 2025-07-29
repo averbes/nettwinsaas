@@ -1,0 +1,40 @@
+from functools import lru_cache
+from typing import Dict, Any
+import redis
+import hvac
+import structlog
+
+from app.core.config import settings
+
+logger = structlog.get_logger()
+
+
+@lru_cache()
+def get_database_connections() -> Dict[str, Any]:
+    """Get database connections (cached)."""
+    
+    connections = {}
+    
+    try:
+        # Redis connection
+        redis_client = redis.from_url(
+            settings.REDIS_URL,
+            encoding="utf-8",
+            decode_responses=True
+        )
+        connections["redis"] = redis_client
+        logger.info("Redis connection established")
+        
+        # Vault connection (mock for demo)
+        vault_client = hvac.Client(
+            url=settings.VAULT_URL,
+            token=settings.VAULT_TOKEN
+        )
+        connections["vault"] = vault_client
+        logger.info("Vault connection established")
+        
+        return connections
+        
+    except Exception as e:
+        logger.error("Failed to establish database connections", error=str(e))
+        raise

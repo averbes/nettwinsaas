@@ -1,0 +1,12 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+redis==5.0.1
+python-jose[cryptography]==3.3.0
+jinja2==3.1.2
+ansible==8.7.0
+ansible-runner==2.3.4
+structlog==23.2.0
+httpx==0.25.2
+hvac==1.2.1
